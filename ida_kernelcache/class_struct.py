@@ -132,6 +132,37 @@ from . import vtable
 
 _log = idau.make_log(2, __name__)
 
+def find_parens(s):
+    toret = {}
+    pstack = []
+
+    for i, c in enumerate(s):
+        if c == '(':
+            pstack.append(i)
+        elif c == ')':
+            if len(pstack) == 0:
+                raise IndexError("No matching closing parens at: " + str(i))
+            toret[pstack.pop()] = i
+
+    if len(pstack) > 0:
+        raise IndexError("No matching opening parens at: " + str(pstack.pop()))
+
+    return toret
+
+
+def add_vmethod_type_ptr(vmethod):
+    """ It is the ugly way, finding the type of vmethod (ea), adding ptr (*) and applying it to the vmethod"""
+    member_type = idc.get_type(vmethod)
+    if member_type is None:
+        return     
+
+    parenthesis = find_parens(member_type)
+    index_of_func_parenthesis_end = max(parenthesis.values())
+    index_of_func_parenthesis_start = list(filter(lambda v: v[1] == index_of_func_parenthesis_end, parenthesis.items()))[0][0]
+
+    new_member_type = member_type[:index_of_func_parenthesis_start] + " (*) " + member_type[index_of_func_parenthesis_start:]
+    return new_member_type
+
 #### Vtable generation ############################################################################
 
 def _populate_vmethods_struct(sid, classinfo):
@@ -161,7 +192,11 @@ def _populate_vmethods_struct(sid, classinfo):
         members.add(name)
         # Create the member.
         offset = (index - super_nmethods) * idau.WORD_SIZE
-        ret = idau.struct_add_ptr(sid, name, offset, type='void *')
+
+        new_member_type = add_vmethod_type_ptr(vmethod)
+        print(f"{name} -> {new_member_type}")
+
+        ret = idau.struct_add_ptr(sid, name, offset, type="void*" if new_member_type is None else new_member_type)
         if ret != 0:
             _log(0, 'Could not create {}::vmethods.{}: {}', classinfo.classname, name, ret)
             return False
