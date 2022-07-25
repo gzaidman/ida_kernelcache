@@ -324,8 +324,8 @@ def class_vtable_overrides(classinfo, superinfo=None, new=False, methods=False):
     class_vlength = classinfo.vtable_length
     # Get the vtable for the superclass.
     if superinfo:
-        super_vtable = superinfo.vtable
-        super_vlength = superinfo.vtable_length
+        super_vtable = superinfo.vtable or 0
+        super_vlength = superinfo.vtable_length or 0
         try:
             assert class_vlength >= super_vlength
         except AssertionError:
