@@ -10,6 +10,8 @@ import idc
 import idautils
 import idaapi
 
+import plistlib
+
 from . import ida_utilities as idau
 from . import kplist
 
@@ -58,6 +60,11 @@ def parse_prelink_info():
 
         #prelink_info_string = idc.get_strlit_contents(segment)
         prelink_info_string = idc.get_bytes(seg_start, seg_end-seg_start)
+
+        print(prelink_info_string[:10])
+        if prelink_info_string.startswith(b'<?xml '):
+            prelink_info = plistlib.loads(prelink_info_string.strip(b'\x00'))
+            return prelink_info
 
         if prelink_info_string[:5] != b"<dict":
             continue
