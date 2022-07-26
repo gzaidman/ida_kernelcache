@@ -197,7 +197,7 @@ def _process_mod_init_func_section_for_metaclasses(segstart, found_metaclass):
 
 def _should_process_segment(seg, segname):
     """Check if we should process the specified segment."""
-    return segname.endswith('__DATA_CONST.__mod_init_func') or \
+    return segname.endswith('__mod_init_func') or \
             segname == '__DATA.__kmod_init' or segname == '__DATA_CONST.__kmod_init'
 
 def _collect_metaclasses():
@@ -293,7 +293,7 @@ def _collect_vtables(metaclass_info):
     # Process all the segments with found_vtable().
     for ea in idautils.Segments():
         segname = idc.get_segm_name(ea)
-        if not segname.endswith('__DATA_CONST.__const'):
+        if not (segname.endswith('__DATA_CONST.__const') or segname.endswith(':__const')):
             continue
         _log(2, 'Processing segment {}', segname)
         _process_const_section_for_vtables(ea, metaclass_info, found_vtable)
