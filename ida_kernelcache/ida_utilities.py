@@ -606,11 +606,21 @@ def struct_add_ptr(sid, name, offset, count=1, type=None):
         idc.SetType(mid, type)
     return ret
 
-def struct_add_struct(sid, name, offset, msid, count=1):
+def struct_add_struct(sid, name, offset, msid, count=1, exist_ok=True):
     """Add a structure member to a structure.
 
     If sid is a union, offset must be -1.
     """
     size = ida_struct.get_struc_size(msid)
-    return idc.add_struc_member(sid, name, offset, idc.FF_DATA | ida_bytes.FF_STRUCT, msid, size * count)
+    retval = idc.add_struc_member(sid, name, offset, idc.FF_DATA | ida_bytes.FF_STRUCT, msid, size * count)
+    if retval != 0 and exist_ok:
+        struc = ida_struct.get_struc(sid)
+        member = ida_struct.get_member(struc, offset)
+        member_struc = ida_struct.get_sptr(member)
+        if member_struc is not None:
+            if member_struc.id == msid:
+                return 0
+            _log(3, "Adding {} to SID {:x}: {:x} != {:x}", name, sid, member_struc.id, msid)
+
+    return retval
 

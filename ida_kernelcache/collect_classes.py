@@ -10,6 +10,7 @@ from collections import defaultdict
 import idc
 import idautils
 import idaapi
+import ida_bytes
 
 from . import ida_utilities as idau
 from . import classes
@@ -183,7 +184,7 @@ def _process_mod_init_func_for_metaclasses(func, found_metaclass):
             return
         _log(5, 'Have call to {:#x}({:#x}, {:#x}, ?, {:#x})', addr, X0, X1, X3)
         # OSMetaClass::OSMetaClass(this, className, superclass, classSize)
-        if not idc.get_segm_name(X1).endswith("__TEXT.__cstring") or not idc.get_segm_name(X0):
+        if not idc.is_strlit(ida_bytes.get_full_flags(X1)):
             return
         found_metaclass(X0, idc.get_strlit_contents(X1).decode(), X3, reg['X2'] or None)
     _emulate_arm64(func, idc.find_func_end(func), on_BL=on_BL)
@@ -196,7 +197,7 @@ def _process_mod_init_func_section_for_metaclasses(segstart, found_metaclass):
 
 def _should_process_segment(seg, segname):
     """Check if we should process the specified segment."""
-    return segname.endswith('__DATA_CONST.__mod_init_func') or \
+    return segname.endswith('__mod_init_func') or \
             segname == '__DATA.__kmod_init' or segname == '__DATA_CONST.__kmod_init'
 
 def _collect_metaclasses():
@@ -292,7 +293,7 @@ def _collect_vtables(metaclass_info):
     # Process all the segments with found_vtable().
     for ea in idautils.Segments():
         segname = idc.get_segm_name(ea)
-        if not segname.endswith('__DATA_CONST.__const'):
+        if not (segname.endswith('__DATA_CONST.__const') or segname.endswith(':__const')):
             continue
         _log(2, 'Processing segment {}', segname)
         _process_const_section_for_vtables(ea, metaclass_info, found_vtable)

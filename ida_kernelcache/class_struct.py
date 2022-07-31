@@ -230,7 +230,7 @@ def _populate_vtable_struct(sid, classinfo):
 
 def _create_vmethods_struct(classinfo):
     """Create the ::vmethods struct for a C++ class."""
-    sid = idau.struct_create(classinfo.classname + '::vmethods')
+    sid = idau.struct_open(classinfo.classname + '::vmethods', create=True)
     if sid is None:
         _log(0, 'Could not create {}::vmethods', classinfo.classname)
         return False
@@ -238,7 +238,7 @@ def _create_vmethods_struct(classinfo):
 
 def _create_vtable_struct(classinfo):
     """Create the ::vtable struct for a C++ class."""
-    sid = idau.struct_create(classinfo.classname + '::vtable')
+    sid = idau.struct_open(classinfo.classname + '::vtable', create=True)
     if sid is None:
         _log(0, 'Could not create {}::vtable', classinfo.classname)
         return False
