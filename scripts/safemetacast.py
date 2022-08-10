@@ -3,11 +3,7 @@ import idc
 import idautils
 import re
 from collections import defaultdict
-
-
 safeMetaCast = idc.get_name_ea_simple('__ZN15OSMetaClassBase12safeMetaCastEPKS_PK11OSMetaClass')
-if safeMetaCast == idc.BADADDR:
-    raise RuntimeError('No safeMetaCast found!')
 
 def is_call_to(e, func):
     return e.op == idaapi.cot_call and e.x.op == idaapi.cot_obj and e.x.obj_ea == func
@@ -25,7 +21,7 @@ class SafeMetaCastVisitor(idaapi.ctree_visitor_t):
     def visit_expr(self, expr):
         if expr.op != idaapi.cot_asg:
             return 0
-        
+
         if expr.x.op != idaapi.cot_var:
             return 0
 
@@ -35,7 +31,7 @@ class SafeMetaCastVisitor(idaapi.ctree_visitor_t):
 
         if len(call.a) != 2:
             return 0
-        
+
         arg = call.a[1]
         if arg.op == idaapi.cot_ref:
             arg = arg.x
@@ -71,10 +67,13 @@ def fix_func(ea):
             print('Unable to modify lvar info', hex(ea), hex(lvar_idx))
             continue
         fixed += 1
-    
+
     print('{}: Fixed {}/{}'.format(idc.get_func_name(ea), fixed, len(visitor.candidates)))
 
 
-func_refs = {idaapi.get_func(ref).start_ea for ref in idautils.CodeRefsTo(safeMetaCast, 1)}
-for addr in func_refs:
-    fix_func(addr)
+def do_metacast_fix():
+    if safeMetaCast == idc.BADADDR:
+        print("No safeMetaCast found!")
+    func_refs = {idaapi.get_func(ref).start_ea for ref in idautils.CodeRefsTo(safeMetaCast, 1)}
+    for addr in func_refs:
+        fix_func(addr)
