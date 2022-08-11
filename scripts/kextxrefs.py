@@ -109,8 +109,9 @@ class KextXrefsForm(ida_kernwin.PluginForm):
 
     def double_clicked(self, row, column):
 
-        ea = self.functions[row]
-        ida_hexrays.open_pseudocode(ea, True)
+        ea = self.functionsEA[row]
+        idaapi.jumpto(ea)
+        #ida_hexrays.open_pseudocode(ea, True) # I prefer to open it in one tab, I might want to check if we already using open_pseudocode
 
         return
 
@@ -146,6 +147,7 @@ class KextXrefsForm(ida_kernwin.PluginForm):
                 cfunc = ida_hexrays.decompile(ea)
 
                 self.functions.append(cfunc.entry_ea)
+                self.functionsEA.append(ea)
                 self.items.append((ea, ida_funcs.get_func_name(cfunc.entry_ea) or "", self.get_decompiled_line(cfunc, ea)))
 
             except Exception as e:
@@ -210,6 +212,7 @@ class KextXrefsForm(ida_kernwin.PluginForm):
                 addresses.append(parent.ea)
 
                 self.functions.append(cfunc.entry_ea)
+                self.functionsEA.append(parent.ea)
                 self.items.append((
                         parent.ea,
                         demangle(ida_funcs.get_func_name(cfunc.entry_ea) or ""),
@@ -222,6 +225,7 @@ class KextXrefsForm(ida_kernwin.PluginForm):
 
         self.functions = []
         self.items = []
+        self.functionsEA = []
 
         if self.__type == XREF_EA:
             self.get_items_for_ea(self.__ea)
